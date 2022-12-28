@@ -1,0 +1,110 @@
+<html>
+
+<head>
+    <title>createDayoffs</title>
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/2.1.1/jquery.min.js"></script>
+    <link rel="stylesheet" href="createStyle.css">
+</head>
+
+<body>
+
+
+    <div class="form">
+        <form class="main" id="createdayoff" action="" method="POST">
+            <h1>Fill your dayoff details below!</h1>
+            <div><input type="date" id="startdate" placeholder="Start date" /></div>
+            <div><input type="date" id="enddate" placeholder="End date" /></div>
+            <select id=type>
+                <option value="special purpose">Ειδικού σκοπού</option>
+                <option value="disease">Ασθένειας</option>
+                <option value="normal" selected>Κανονική</option>
+                <option value="student">Φοιτητική</option>
+                <option value="agricultural">Αγροτικές</option>
+                <option value="work strike">Απεργία</option>
+            </select>
+            <div><button class="insert" type="button" id="submitbutton" value="sumbit">Insert</button></div>
+
+
+        </form>
+        <button class="return" type="button" id="return">Return to my dayoffs</button>
+        <div id="header"></div>
+
+    </div>
+</body>
+
+<script type="text/javascript">
+    var auth;
+    $(function () {
+        var dtToday = new Date();
+
+
+        var month = dtToday.getMonth() + 1;
+        var day = dtToday.getDate();
+        var year = dtToday.getFullYear();
+
+        if (month < 10)
+            month = '0' + month.toString();
+        if (day < 10)
+            day = '0' + day.toString();
+
+        var min = year + '-' + month + '-' + day;
+        $('#startdate').attr('min', min);
+        $('#enddate').attr('min', min);
+    });
+
+    $("#submitbutton").on("click", function () {
+        if ($("#startdate").val() == "" || $("#enddate").val() == "") {
+            alert("one or more required fields are empty");
+            return;
+        }
+        var data = new FormData();
+
+        data = {
+            "startdate": $("#startdate").val(),
+            "enddate": $("#enddate").val(),
+            "type": $("#type").val()
+        };
+        console.log(JSON.stringify(data));
+        var APIReq = new XMLHttpRequest();
+        APIReq.addEventListener("readystatechange", function () {
+            if (this.readyState === 4 && this.status == 200) {
+                var requestdata = JSON.parse(this.responseText);
+                console.log(requestdata);
+                addelementstotable(requestdata);
+            }
+        });
+        APIReq.open("POST", "http://localhost:9090/api/User");
+        APIReq.setRequestHeader("Access-Control-Allow-Origin", "http://localhost:9090/");
+        APIReq.setRequestHeader("Authorization", 'Basic ' + auth);
+        APIReq.setRequestHeader("Content-Type", "application/json;charset=UTF-8");
+        APIReq.send(JSON.stringify(data));
+        document.getElementById("submitbutton").disabled = true;
+        setTimeout(function () {
+            window.location = "http://localhost:3000/getDayoffs.html";
+        }, 2000);
+
+    });
+
+    $('document').ready(function (res) {
+        $("#header").load("header.html");
+        var FrontReq = new XMLHttpRequest();
+        FrontReq.addEventListener("readystatechange", function () {
+            if (this.readyState === 4 && this.status == 200) {
+                var requestdata = JSON.parse(this.responseText);
+                auth = requestdata.auth;
+                console.log(auth);
+                if (auth == null || auth == "") {
+                    location.replace("http://localhost:3000/error.html");
+                }
+            }
+        });
+        FrontReq.open("GET", "http://localhost:3000/getvalues");
+        FrontReq.send(null);
+    });
+
+    document.getElementById("return").onclick = function () {
+        location.href = "/getDayoffs.html"
+    }
+</script>
+
+</html>
